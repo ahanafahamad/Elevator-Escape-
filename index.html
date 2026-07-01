@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Outfit:wght@100..900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Elevator Escape</title>
+    <script type="module" crossorigin src="/assets/index-Bf-gJN4g.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B1qnRQdt.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      (function () {
+        let wakeLock = null;
+        let fullscreenActive = false;
+
+        async function requestWakeLock() {
+          if (!("wakeLock" in navigator)) return;
+          try {
+            if (wakeLock) {
+              await wakeLock.release();
+              wakeLock = null;
+            }
+            wakeLock = await navigator.wakeLock.request("screen");
+            wakeLock.addEventListener("release", () => {
+              wakeLock = null;
+              if (document.visibilityState === "visible") requestWakeLock();
+            });
+          } catch (e) {}
+        }
+
+        async function lockOrientation() {
+          if (!screen.orientation || typeof screen.orientation.lock !== "function") return;
+          try {
+            await screen.orientation.lock("landscape");
+          } catch (e) {}
+        }
+
+        async function requestFullscreen() {
+          const el = document.documentElement;
+          try {
+            if (el.requestFullscreen) await el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+            else if (el.msRequestFullscreen) await el.msRequestFullscreen();
+            fullscreenActive = !!document.fullscreenElement || !!document.webkitFullscreenElement;
+            if (fullscreenActive) setTimeout(lockOrientation, 150);
+          } catch (e) {}
+        }
+
+        function handleFullscreenChange() {
+          fullscreenActive = !!document.fullscreenElement || !!document.webkitFullscreenElement;
+          if (fullscreenActive) lockOrientation();
+        }
+
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible" && !wakeLock) requestWakeLock();
+        });
+
+        window.addEventListener("orientationchange", () => {
+          if (fullscreenActive) lockOrientation();
+        });
+
+        function onFirstInteraction() {
+          requestFullscreen();
+          requestWakeLock();
+          document.removeEventListener("click", onFirstInteraction);
+          document.removeEventListener("touchstart", onFirstInteraction);
+          document.removeEventListener("keydown", onFirstInteraction);
+        }
+
+        document.addEventListener("click", onFirstInteraction);
+        document.addEventListener("touchstart", onFirstInteraction);
+        document.addEventListener("keydown", onFirstInteraction);
+      })();
+    </script>
+  </body>
+</html>
